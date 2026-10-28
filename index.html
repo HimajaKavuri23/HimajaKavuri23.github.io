@@ -429,7 +429,7 @@ lineGroups.forEach(s => io.observe(s));
   const ctx = cv.getContext('2d');
   const acc = '#c9a84c';
 
-  function resize() { cv.width = cv.offsetWidth; cv.height = cv.offsetHeight; }
+  function resize() { cv.width = window.innerWidth; cv.height = window.innerHeight; }
   resize();
   new ResizeObserver(resize).observe(cv);
 
@@ -488,7 +488,7 @@ lineGroups.forEach(s => io.observe(s));
 (function initFinance() {
   const cv = document.getElementById('cv1');
   const ctx = cv.getContext('2d');
-  function resize() { cv.width = cv.offsetWidth; cv.height = cv.offsetHeight; }
+  function resize() { cv.width = window.innerWidth; cv.height = window.innerHeight; }
   resize();
   new ResizeObserver(resize).observe(cv);
 
@@ -748,7 +748,7 @@ lineGroups.forEach(s => io.observe(s));
 (function initPlayStore() {
   const cv = document.getElementById('cv4');
   const ctx = cv.getContext('2d');
-  function resize() { cv.width = cv.offsetWidth; cv.height = cv.offsetHeight; }
+  function resize() { cv.width = window.innerWidth; cv.height = window.innerHeight; }
   resize();
   new ResizeObserver(resize).observe(cv);
 
@@ -823,7 +823,7 @@ lineGroups.forEach(s => io.observe(s));
 (function initAbout() {
   const cv = document.getElementById('cv5');
   const ctx = cv.getContext('2d');
-  function resize() { cv.width = cv.offsetWidth; cv.height = cv.offsetHeight; }
+  function resize() { cv.width = window.innerWidth; cv.height = window.innerHeight; }
   resize();
   new ResizeObserver(resize).observe(cv);
 
