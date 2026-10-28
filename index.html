@@ -44,29 +44,25 @@ body{background:var(--bg);color:var(--fg);font-family:'Inter',sans-serif;cursor:
 #ol-close:hover{color:var(--fg)}
 
 /* ══════════════════════════════════════════════
-   SCROLL-DRIVEN STICKY SECTION ARCHITECTURE
+   CONTINUOUS SCROLL ARCHITECTURE
 
-   Each .scene is a tall "scroll zone" (300vh).
-   Inside it, .scene-sticky sticks to the top —
-   the full-bleed visual STAYS on screen while
-   the user scrolls through the 300vh zone.
-   The .scene-text scrolls UP over the visual.
-   As the next section enters, it slides in from
-   below, pushing the current one off screen.
+   Each .scene fills at least one screen height.
+   The visual fills the section as a background.
+   Text sits on top in normal document flow,
+   clearing the fixed nav with padding-top.
 ═══════════════════════════════════════════════ */
 
 .scene {
   position: relative;
-  height: 300vh; /* scroll zone — visual stays pinned for 3 screen heights */
+  min-height: 100vh;
 }
-.scene:first-child { height: 130vh; } /* hero */
-#scene-about { height: 250vh; }
 
-/* the sticky container — pins and holds the visual */
+/* the section container */
 .scene-sticky {
-  position: sticky;
-  top: 0;
-  height: 100vh;
+  position: relative;
+  min-height: 100vh;
+  display: flex;
+  align-items: flex-start;
   overflow: hidden;
 }
 
@@ -87,16 +83,13 @@ body{background:var(--bg);color:var(--fg);font-family:'Inter',sans-serif;cursor:
   z-index: 1;
 }
 
-/* narrative text — appears over the visual */
+/* narrative text — sits in normal flow over the visual */
 .scene-text {
-  position: absolute;
-  top: 44%;
-  transform: translateY(-50%);
-  left: 0;
+  position: relative;
   z-index: 2;
-  padding: 0 56px;
-  width: 52vw;
-  max-width: 640px;
+  padding: 120px 56px 80px;
+  width: 60vw;
+  max-width: 680px;
 }
 
 /* chapter number */
@@ -132,9 +125,8 @@ body{background:var(--bg);color:var(--fg);font-family:'Inter',sans-serif;cursor:
 /* tag pill */
 .pill{display:inline-block;font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.1em;text-transform:uppercase;border:1px solid rgba(201,168,76,.3);color:var(--accent);padding:5px 12px;margin-right:8px;margin-top:6px}
 
-/* slide-in animation driven by JS scroll */
+/* clip-path kept for smooth section transitions */
 .scene-sticky {
-  /* slight upward clip reveal as this section enters viewport */
   clip-path: inset(0 0 0 0);
 }
 
@@ -167,12 +159,10 @@ body{background:var(--bg);color:var(--fg);font-family:'Inter',sans-serif;cursor:
   grid-template-columns: 1fr 1fr;
   gap: 56px;
   align-items: start;
-  padding: 0 56px 72px;
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  right: 0;
+  padding: 120px 56px 80px;
+  position: relative;
   z-index: 2;
+  width: 100%;
 }
 .about-links { display: flex; flex-direction: column; gap: 14px; margin-top: 28px; }
 .about-link { display: flex; align-items: center; gap: 14px; text-decoration: none; color: var(--dim); font-size: 14px; transition: color .2s; cursor: none; }
@@ -180,47 +170,17 @@ body{background:var(--bg);color:var(--fg);font-family:'Inter',sans-serif;cursor:
 .about-link svg { flex-shrink: 0; }
 .about-link .link-label { font-family:'IBM Plex Mono',monospace; font-size:11px; letter-spacing:.08em; }
 
-/* ── RIGHT-SIDE SCENE CARDS ── */
-.scene-card {
-  position: absolute;
-  top: 50%;
-  right: 4vw;
-  z-index: 3;
-  width: 38vw;
-  max-width: 520px;
-  min-width: 320px;
-  background: rgba(11,17,32,.78);
-  border: 1px solid rgba(201,168,76,.18);
-  backdrop-filter: blur(18px);
-  -webkit-backdrop-filter: blur(18px);
-  border-radius: 2px;
-  padding: 32px 32px 28px;
-  opacity: 0;
-  transform: translateY(calc(-50% + 28px));
-  transition: opacity .9s cubic-bezier(.16,1,.3,1), transform .9s cubic-bezier(.16,1,.3,1);
-}
-.scene-card.vis {
-  opacity: 1;
-  transform: translateY(-50%);
-}
-
-.card-label {
-  font-family: 'IBM Plex Mono', monospace;
-  font-size: 9px;
-  letter-spacing: .18em;
-  text-transform: uppercase;
-  color: var(--accent);
-  opacity: .7;
-  margin-bottom: 18px;
-}
-
 /* mobile */
 @media(max-width:640px){
-  .scene-text, #nav{padding-left:24px;padding-right:24px}
+  .scene-text{padding:100px 24px 60px;width:100%}
+  #nav{padding-left:24px;padding-right:24px}
   #ch-btn{right:24px;bottom:24px}
-  .about-inner{grid-template-columns:1fr;padding-left:24px;padding-right:24px}
+  .about-inner{grid-template-columns:1fr;padding-left:24px;padding-right:24px;padding-top:100px}
   .ol-list{min-width:unset;width:90vw}
-  .scene-card { display: none; }
+}
+@media(min-width:1400px){
+  .scene-text{padding-top:140px}
+  .about-inner{padding-top:140px}
 }
 </style>
 
@@ -292,63 +252,6 @@ body{background:var(--bg);color:var(--fg);font-family:'Inter',sans-serif;cursor:
       </div>
     </div>
 
-    <!-- Ch01 right card: stock ticker panel -->
-    <div class="scene-card" id="card01">
-      <div class="card-label">Live Valuation Engine</div>
-      <svg id="ticker-svg" viewBox="0 0 300 220" width="100%" xmlns="http://www.w3.org/2000/svg">
-        <!-- grid -->
-        <line x1="0" y1="60" x2="300" y2="60" stroke="#c9a84c" stroke-opacity=".06" stroke-width="1"/>
-        <line x1="0" y1="110" x2="300" y2="110" stroke="#c9a84c" stroke-opacity=".06" stroke-width="1"/>
-        <line x1="0" y1="160" x2="300" y2="160" stroke="#c9a84c" stroke-opacity=".06" stroke-width="1"/>
-        <!-- sparkline polyline (static data) -->
-        <polyline points="10,145 35,138 55,150 80,122 100,130 120,108 145,115 165,92 185,105 205,80 225,88 245,70 265,78 290,58"
-          fill="none" stroke="#c9a84c" stroke-width="1.8" stroke-opacity=".8"/>
-        <!-- area fill under sparkline -->
-        <polygon points="10,145 35,138 55,150 80,122 100,130 120,108 145,115 165,92 185,105 205,80 225,88 245,70 265,78 290,58 290,190 10,190"
-          fill="url(#spkGrad)" opacity=".18"/>
-        <defs>
-          <linearGradient id="spkGrad" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stop-color="#c9a84c" stop-opacity="1"/>
-            <stop offset="100%" stop-color="#c9a84c" stop-opacity="0"/>
-          </linearGradient>
-        </defs>
-        <!-- company row 1 -->
-        <text x="10" y="200" font-family="IBM Plex Mono,monospace" font-size="9" fill="#c9a84c" opacity=".5">INTRINSIC IQ — EQUITY ANALYSIS</text>
-      </svg>
-      <!-- ticker rows -->
-      <div style="display:flex;flex-direction:column;gap:10px;margin-top:4px">
-        <div style="display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid rgba(201,168,76,.08);padding-bottom:9px">
-          <div>
-            <div style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:#f0e8d5;letter-spacing:.06em">AAPL</div>
-            <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;color:#5a6a80;margin-top:2px">Apple Inc.</div>
-          </div>
-          <div style="text-align:right">
-            <div style="font-size:13px;font-weight:700;color:#f0e8d5;font-variant-numeric:tabular-nums">$189.42</div>
-            <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;color:#3ecf8e;margin-top:2px">▲ 2.14%</div>
-          </div>
-        </div>
-        <div style="display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid rgba(201,168,76,.08);padding-bottom:9px">
-          <div>
-            <div style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:#f0e8d5;letter-spacing:.06em">MSFT</div>
-            <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;color:#5a6a80;margin-top:2px">Microsoft Corp.</div>
-          </div>
-          <div style="text-align:right">
-            <div style="font-size:13px;font-weight:700;color:#f0e8d5;font-variant-numeric:tabular-nums">$374.15</div>
-            <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;color:#3ecf8e;margin-top:2px">▲ 0.87%</div>
-          </div>
-        </div>
-        <div style="display:flex;justify-content:space-between;align-items:center">
-          <div>
-            <div style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:#f0e8d5;letter-spacing:.06em">NVDA</div>
-            <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;color:#5a6a80;margin-top:2px">NVIDIA Corp.</div>
-          </div>
-          <div style="text-align:right">
-            <div style="font-size:13px;font-weight:700;color:#f0e8d5;font-variant-numeric:tabular-nums">$621.88</div>
-            <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;color:#e05260;margin-top:2px">▼ 1.22%</div>
-          </div>
-        </div>
-      </div>
-    </div>
   </div>
 </section>
 
@@ -375,63 +278,6 @@ body{background:var(--bg);color:var(--fg);font-family:'Inter',sans-serif;cursor:
       </div>
     </div>
 
-    <!-- Ch02 right card: accuracy gauge + top features -->
-    <div class="scene-card" id="card02">
-      <div class="card-label">Model Performance</div>
-      <!-- Arc gauge showing 93% -->
-      <svg viewBox="0 0 300 160" width="100%" xmlns="http://www.w3.org/2000/svg" style="margin-bottom:16px">
-        <!-- track arc -->
-        <path d="M 30,130 A 120,120 0 0,1 270,130" fill="none" stroke="rgba(201,168,76,.12)" stroke-width="12" stroke-linecap="round"/>
-        <!-- value arc (93% of 180deg = 167.4deg) -->
-        <path d="M 30,130 A 120,120 0 0,1 262,99" fill="none" stroke="#c9a84c" stroke-width="12" stroke-linecap="round" opacity=".85"/>
-        <!-- center label -->
-        <text x="150" y="118" text-anchor="middle" font-family="Inter,sans-serif" font-size="38" font-weight="800" fill="#f0e8d5" letter-spacing="-2">93%</text>
-        <text x="150" y="138" text-anchor="middle" font-family="IBM Plex Mono,monospace" font-size="9" fill="#c9a84c" opacity=".55" letter-spacing=".1em">ACCURACY</text>
-        <!-- scale ticks -->
-        <text x="26" y="148" font-family="IBM Plex Mono,monospace" font-size="8" fill="#5a6a80">0%</text>
-        <text x="261" y="148" font-family="IBM Plex Mono,monospace" font-size="8" fill="#5a6a80">100%</text>
-      </svg>
-      <!-- feature importance bars -->
-      <div class="card-label" style="margin-bottom:10px">Top Predictors (SHAP)</div>
-      <div style="display:flex;flex-direction:column;gap:7px">
-        <div>
-          <div style="display:flex;justify-content:space-between;margin-bottom:3px">
-            <span style="font-family:'IBM Plex Mono',monospace;font-size:9px;color:#5a6a80">Age</span>
-            <span style="font-family:'IBM Plex Mono',monospace;font-size:9px;color:#c9a84c">0.34</span>
-          </div>
-          <div style="height:4px;background:rgba(201,168,76,.1);border-radius:2px">
-            <div style="height:100%;width:82%;background:#c9a84c;border-radius:2px;opacity:.75"></div>
-          </div>
-        </div>
-        <div>
-          <div style="display:flex;justify-content:space-between;margin-bottom:3px">
-            <span style="font-family:'IBM Plex Mono',monospace;font-size:9px;color:#5a6a80">Hypertension</span>
-            <span style="font-family:'IBM Plex Mono',monospace;font-size:9px;color:#c9a84c">0.28</span>
-          </div>
-          <div style="height:4px;background:rgba(201,168,76,.1);border-radius:2px">
-            <div style="height:100%;width:67%;background:#c9a84c;border-radius:2px;opacity:.75"></div>
-          </div>
-        </div>
-        <div>
-          <div style="display:flex;justify-content:space-between;margin-bottom:3px">
-            <span style="font-family:'IBM Plex Mono',monospace;font-size:9px;color:#5a6a80">Glucose Level</span>
-            <span style="font-family:'IBM Plex Mono',monospace;font-size:9px;color:#c9a84c">0.21</span>
-          </div>
-          <div style="height:4px;background:rgba(201,168,76,.1);border-radius:2px">
-            <div style="height:100%;width:50%;background:#c9a84c;border-radius:2px;opacity:.75"></div>
-          </div>
-        </div>
-        <div>
-          <div style="display:flex;justify-content:space-between;margin-bottom:3px">
-            <span style="font-family:'IBM Plex Mono',monospace;font-size:9px;color:#5a6a80">BMI</span>
-            <span style="font-family:'IBM Plex Mono',monospace;font-size:9px;color:#c9a84c">0.14</span>
-          </div>
-          <div style="height:4px;background:rgba(201,168,76,.1);border-radius:2px">
-            <div style="height:100%;width:34%;background:#c9a84c;border-radius:2px;opacity:.75"></div>
-          </div>
-        </div>
-      </div>
-    </div>
   </div>
 </section>
 
@@ -457,64 +303,6 @@ body{background:var(--bg);color:var(--fg);font-family:'Inter',sans-serif;cursor:
       </div>
     </div>
 
-    <!-- Ch03 right card: LOS bar chart + KPIs -->
-    <div class="scene-card" id="card03">
-      <div class="card-label">Length-of-Stay Distribution</div>
-      <svg viewBox="0 0 300 170" width="100%" xmlns="http://www.w3.org/2000/svg" style="margin-bottom:16px">
-        <!-- y-axis label -->
-        <text x="6" y="14" font-family="IBM Plex Mono,monospace" font-size="8" fill="#5a6a80">patients</text>
-        <!-- bars (LOS 1-8 days) -->
-        <!-- heights represent distribution: 1d=25,2d=38,3d=46,4d=40,5d=30,6d=20,7d=13,8d=8 -->
-        <g transform="translate(24,10)">
-          <!-- grid line -->
-          <line x1="0" y1="130" x2="270" y2="130" stroke="rgba(201,168,76,.1)" stroke-width="1"/>
-          <line x1="0" y1="97" x2="270" y2="97" stroke="rgba(201,168,76,.06)" stroke-width="1"/>
-          <line x1="0" y1="65" x2="270" y2="65" stroke="rgba(201,168,76,.06)" stroke-width="1"/>
-          <!-- bar 1d -->
-          <rect x="4" y="86" width="26" height="44" fill="#c9a84c" opacity=".5" rx="1"/>
-          <text x="17" y="148" text-anchor="middle" font-family="IBM Plex Mono,monospace" font-size="7" fill="#5a6a80">1d</text>
-          <!-- bar 2d -->
-          <rect x="38" y="63" width="26" height="67" fill="#c9a84c" opacity=".65" rx="1"/>
-          <text x="51" y="148" text-anchor="middle" font-family="IBM Plex Mono,monospace" font-size="7" fill="#5a6a80">2d</text>
-          <!-- bar 3d (tallest) -->
-          <rect x="72" y="49" width="26" height="81" fill="#c9a84c" opacity=".85" rx="1"/>
-          <text x="85" y="148" text-anchor="middle" font-family="IBM Plex Mono,monospace" font-size="7" fill="#c9a84c">3d</text>
-          <!-- bar 4d -->
-          <rect x="106" y="59" width="26" height="71" fill="#c9a84c" opacity=".7" rx="1"/>
-          <text x="119" y="148" text-anchor="middle" font-family="IBM Plex Mono,monospace" font-size="7" fill="#5a6a80">4d</text>
-          <!-- bar 5d -->
-          <rect x="140" y="77" width="26" height="53" fill="#c9a84c" opacity=".55" rx="1"/>
-          <text x="153" y="148" text-anchor="middle" font-family="IBM Plex Mono,monospace" font-size="7" fill="#5a6a80">5d</text>
-          <!-- bar 6d -->
-          <rect x="174" y="95" width="26" height="35" fill="#c9a84c" opacity=".4" rx="1"/>
-          <text x="187" y="148" text-anchor="middle" font-family="IBM Plex Mono,monospace" font-size="7" fill="#5a6a80">6d</text>
-          <!-- bar 7d -->
-          <rect x="208" y="107" width="26" height="23" fill="#c9a84c" opacity=".3" rx="1"/>
-          <text x="221" y="148" text-anchor="middle" font-family="IBM Plex Mono,monospace" font-size="7" fill="#5a6a80">7d</text>
-          <!-- bar 8d+ -->
-          <rect x="242" y="116" width="26" height="14" fill="#c9a84c" opacity=".2" rx="1"/>
-          <text x="255" y="148" text-anchor="middle" font-family="IBM Plex Mono,monospace" font-size="7" fill="#5a6a80">8d+</text>
-          <!-- prediction overlay -->
-          <polyline points="17,86 51,63 85,49 119,59 153,77 187,95 221,107 255,116"
-            fill="none" stroke="#3ecf8e" stroke-width="1.5" stroke-opacity=".6" stroke-dasharray="4,3"/>
-        </g>
-      </svg>
-      <!-- KPI row -->
-      <div style="display:flex;justify-content:space-between;border-top:1px solid rgba(201,168,76,.1);padding-top:14px">
-        <div style="text-align:center">
-          <div style="font-size:20px;font-weight:800;color:#f0e8d5;font-variant-numeric:tabular-nums">3.2d</div>
-          <div style="font-family:'IBM Plex Mono',monospace;font-size:8px;color:#5a6a80;margin-top:3px;letter-spacing:.06em">MEDIAN LOS</div>
-        </div>
-        <div style="text-align:center">
-          <div style="font-size:20px;font-weight:800;color:#3ecf8e;font-variant-numeric:tabular-nums">48h</div>
-          <div style="font-family:'IBM Plex Mono',monospace;font-size:8px;color:#5a6a80;margin-top:3px;letter-spacing:.06em">HORIZON</div>
-        </div>
-        <div style="text-align:center">
-          <div style="font-size:20px;font-weight:800;color:#c9a84c;font-variant-numeric:tabular-nums">R²</div>
-          <div style="font-family:'IBM Plex Mono',monospace;font-size:8px;color:#5a6a80;margin-top:3px;letter-spacing:.06em">EXPLAINED</div>
-        </div>
-      </div>
-    </div>
   </div>
 </section>
 
@@ -541,85 +329,6 @@ body{background:var(--bg);color:var(--fg);font-family:'Inter',sans-serif;cursor:
       </div>
     </div>
 
-    <!-- Ch04 right card: sentiment breakdown + star ratings -->
-    <div class="scene-card" id="card04">
-      <div class="card-label">Review Sentiment Analysis</div>
-      <!-- Donut-style sentiment split -->
-      <svg viewBox="0 0 300 140" width="100%" xmlns="http://www.w3.org/2000/svg" style="margin-bottom:4px">
-        <!-- donut arcs: positive 58%, neutral 23%, negative 19% -->
-        <!-- Using stroke-dasharray technique on a circle r=48, circumference=301.6 -->
-        <!-- positive: 58% = 174.9 of 301.6 -->
-        <!-- neutral: 23% = 69.4 -->
-        <!-- negative: 19% = 57.3 -->
-        <g transform="translate(70,72)">
-          <!-- track -->
-          <circle cx="0" cy="0" r="48" fill="none" stroke="rgba(201,168,76,.08)" stroke-width="16"/>
-          <!-- negative (start at top, going clockwise) -->
-          <circle cx="0" cy="0" r="48" fill="none" stroke="#e05260" stroke-width="16"
-            stroke-dasharray="57.3 244.3" stroke-dashoffset="0" opacity=".75"
-            transform="rotate(-90)"/>
-          <!-- neutral -->
-          <circle cx="0" cy="0" r="48" fill="none" stroke="#c9a84c" stroke-width="16"
-            stroke-dasharray="69.4 232.2" stroke-dashoffset="-57.3" opacity=".6"
-            transform="rotate(-90)"/>
-          <!-- positive -->
-          <circle cx="0" cy="0" r="48" fill="none" stroke="#3ecf8e" stroke-width="16"
-            stroke-dasharray="174.9 126.7" stroke-dashoffset="-126.7" opacity=".75"
-            transform="rotate(-90)"/>
-          <!-- center text -->
-          <text x="0" y="-6" text-anchor="middle" font-family="Inter,sans-serif" font-size="18" font-weight="800" fill="#f0e8d5">58%</text>
-          <text x="0" y="12" text-anchor="middle" font-family="IBM Plex Mono,monospace" font-size="7" fill="#3ecf8e" opacity=".8">POSITIVE</text>
-        </g>
-        <!-- legend -->
-        <g transform="translate(158,30)">
-          <rect x="0" y="0" width="8" height="8" fill="#3ecf8e" opacity=".75" rx="1"/>
-          <text x="12" y="8" font-family="IBM Plex Mono,monospace" font-size="9" fill="#5a6a80">Positive 58%</text>
-          <rect x="0" y="22" width="8" height="8" fill="#c9a84c" opacity=".6" rx="1"/>
-          <text x="12" y="30" font-family="IBM Plex Mono,monospace" font-size="9" fill="#5a6a80">Neutral  23%</text>
-          <rect x="0" y="44" width="8" height="8" fill="#e05260" opacity=".75" rx="1"/>
-          <text x="12" y="52" font-family="IBM Plex Mono,monospace" font-size="9" fill="#5a6a80">Negative 19%</text>
-        </g>
-      </svg>
-      <!-- star rating breakdown -->
-      <div class="card-label" style="margin-bottom:10px;margin-top:4px">Rating Distribution</div>
-      <div style="display:flex;flex-direction:column;gap:5px">
-        <div style="display:flex;align-items:center;gap:8px">
-          <span style="font-family:'IBM Plex Mono',monospace;font-size:9px;color:#5a6a80;width:14px;text-align:right">5★</span>
-          <div style="flex:1;height:5px;background:rgba(201,168,76,.1);border-radius:2px">
-            <div style="height:100%;width:52%;background:#3ecf8e;border-radius:2px;opacity:.7"></div>
-          </div>
-          <span style="font-family:'IBM Plex Mono',monospace;font-size:9px;color:#5a6a80;width:26px">52%</span>
-        </div>
-        <div style="display:flex;align-items:center;gap:8px">
-          <span style="font-family:'IBM Plex Mono',monospace;font-size:9px;color:#5a6a80;width:14px;text-align:right">4★</span>
-          <div style="flex:1;height:5px;background:rgba(201,168,76,.1);border-radius:2px">
-            <div style="height:100%;width:21%;background:#3ecf8e;border-radius:2px;opacity:.5"></div>
-          </div>
-          <span style="font-family:'IBM Plex Mono',monospace;font-size:9px;color:#5a6a80;width:26px">21%</span>
-        </div>
-        <div style="display:flex;align-items:center;gap:8px">
-          <span style="font-family:'IBM Plex Mono',monospace;font-size:9px;color:#5a6a80;width:14px;text-align:right">3★</span>
-          <div style="flex:1;height:5px;background:rgba(201,168,76,.1);border-radius:2px">
-            <div style="height:100%;width:11%;background:#c9a84c;border-radius:2px;opacity:.6"></div>
-          </div>
-          <span style="font-family:'IBM Plex Mono',monospace;font-size:9px;color:#5a6a80;width:26px">11%</span>
-        </div>
-        <div style="display:flex;align-items:center;gap:8px">
-          <span style="font-family:'IBM Plex Mono',monospace;font-size:9px;color:#5a6a80;width:14px;text-align:right">2★</span>
-          <div style="flex:1;height:5px;background:rgba(201,168,76,.1);border-radius:2px">
-            <div style="height:100%;width:7%;background:#e05260;border-radius:2px;opacity:.5"></div>
-          </div>
-          <span style="font-family:'IBM Plex Mono',monospace;font-size:9px;color:#5a6a80;width:26px">7%</span>
-        </div>
-        <div style="display:flex;align-items:center;gap:8px">
-          <span style="font-family:'IBM Plex Mono',monospace;font-size:9px;color:#5a6a80;width:14px;text-align:right">1★</span>
-          <div style="flex:1;height:5px;background:rgba(201,168,76,.1);border-radius:2px">
-            <div style="height:100%;width:9%;background:#e05260;border-radius:2px;opacity:.7"></div>
-          </div>
-          <span style="font-family:'IBM Plex Mono',monospace;font-size:9px;color:#5a6a80;width:26px">9%</span>
-        </div>
-      </div>
-    </div>
   </div>
 </section>
 
@@ -704,14 +413,11 @@ const lineGroups = document.querySelectorAll('.scene');
 const io = new IntersectionObserver(entries => {
   entries.forEach(entry => {
     const lines = entry.target.querySelectorAll('.line-in');
-    const card = entry.target.querySelector('.scene-card');
     if (entry.isIntersecting) {
       lines.forEach(l => l.classList.add('vis'));
-      if (card) setTimeout(() => card.classList.add('vis'), 200);
     } else {
       // remove so they re-animate on re-entry
       lines.forEach(l => l.classList.remove('vis'));
-      if (card) card.classList.remove('vis');
     }
   });
 }, { threshold: 0.15 });
