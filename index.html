@@ -1,3 +1,8 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Himaja Kavuri</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=IBM+Plex+Mono:wght@300;400&display=swap">
 
@@ -207,6 +212,8 @@ body{background:var(--bg);color:var(--fg);font-family:'Inter',sans-serif;cursor:
   .about-inner{padding-top:140px}
 }
 </style>
+</head>
+<body>
 
 <!-- cursor -->
 <div id="cur"></div>
@@ -869,3 +876,245 @@ lineGroups.forEach(s => io.observe(s));
       const cat = phase < 1 ? CATS[i] : finalOrder[i];
       const barX = BAR_GAP + i * (BAR_W + BAR_GAP);
 
+      let barH;
+      if (phase === 0) {
+        // Chaotic: animate between noise value and small jitter
+        const jitter = Math.sin(frame * 0.09 + i * 1.7) * 0.07;
+        barH = (CATS[i].noise + jitter) * BAR_MAX_H;
+      } else if (phase === 1) {
+        // Transition: from chaotic order to final sorted order
+        // Interpolate position and height
+        const fromH = CATS[i].noise * BAR_MAX_H;
+        const toH = finalOrder[i].final * BAR_MAX_H;
+        barH = fromH + (toH - fromH) * t_settle;
+      } else {
+        barH = finalOrder[i].final * BAR_MAX_H;
+      }
+
+      // Bar fill
+      const alpha = phase === 2 ? 0.22 : 0.14 + phaseT * 0.06;
+      ctx.fillStyle = `rgba(${accRGB},${alpha})`;
+      ctx.fillRect(barX, BAR_BASE - barH, BAR_W, barH);
+
+      // Bar top highlight
+      const hlAlpha = phase === 2 ? 0.45 : 0.22;
+      ctx.fillStyle = `rgba(${accRGB},${hlAlpha})`;
+      ctx.fillRect(barX, BAR_BASE - barH, BAR_W, 2);
+
+      // Side glow
+      const grad = ctx.createLinearGradient(barX, 0, barX + BAR_W, 0);
+      grad.addColorStop(0, `rgba(${accRGB},0.0)`);
+      grad.addColorStop(0.3, `rgba(${accRGB},0.06)`);
+      grad.addColorStop(1, `rgba(${accRGB},0.0)`);
+      ctx.fillStyle = grad;
+      ctx.fillRect(barX, BAR_BASE - barH, BAR_W, barH);
+
+      // Label
+      ctx.save();
+      ctx.font = '9px IBM Plex Mono, monospace';
+      ctx.letterSpacing = '0.1em';
+      ctx.fillStyle = phase === 2
+        ? `rgba(${accRGB},0.55)`
+        : `rgba(90,106,128,0.4)`;
+      ctx.textAlign = 'center';
+      ctx.translate(barX + BAR_W / 2, LABEL_Y + 12);
+      ctx.rotate(Math.PI / 2);
+      ctx.fillText(cat.label, 0, 0);
+      ctx.restore();
+
+      // Value label on top
+      if (phase === 2) {
+        const pct = Math.round(finalOrder[i].final * 100);
+        ctx.font = '11px IBM Plex Mono, monospace';
+        ctx.fillStyle = acc;
+        ctx.textAlign = 'center';
+        ctx.fillText(pct + '%', barX + BAR_W / 2, BAR_BASE - barH - 10);
+      }
+    }
+
+    // Particles
+    for (const p of particles) {
+      if (phase < 2) {
+        // Float freely during chaos
+        p.x += p.vx; p.y += p.vy;
+        if (p.x < 0 || p.x > W) p.vx *= -1;
+        if (p.y < H * 0.05 || p.y > H * 0.75) p.vy *= -1;
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+        ctx.fillStyle = `rgba(${accRGB},${p.alpha * (1 - t_settle)})`;
+        ctx.fill();
+      }
+    }
+
+    // Scan line (chaos only)
+    if (phase < 1) {
+      scanY += 1.4;
+      if (scanY > H) scanY = -20;
+      const sg = ctx.createLinearGradient(0, scanY - 6, 0, scanY + 6);
+      sg.addColorStop(0, 'rgba(201,168,76,0)');
+      sg.addColorStop(0.5, 'rgba(201,168,76,0.04)');
+      sg.addColorStop(1, 'rgba(201,168,76,0)');
+      ctx.fillStyle = sg;
+      ctx.fillRect(0, scanY - 6, W, 12);
+    }
+
+    // "REBALANCING..." text during settle
+    if (phase === 1 && t_settle < 0.8) {
+      ctx.font = '10px IBM Plex Mono, monospace';
+      ctx.fillStyle = `rgba(${accRGB},${(1-t_settle) * 0.5})`;
+      ctx.textAlign = 'right';
+      ctx.fillText('REBALANCING...', W - 56, H * 0.14);
+    }
+
+    // "OPTIMIZED" stamp when final
+    if (phase === 2) {
+      const fadeIn = Math.min(1, (f - CHAOS_DUR - SETTLE_DUR) / 30);
+      ctx.font = '10px IBM Plex Mono, monospace';
+      ctx.fillStyle = `rgba(${accRGB},${0.35 * fadeIn})`;
+      ctx.textAlign = 'right';
+      ctx.fillText('ALLOCATION OPTIMIZED', W - 56, H * 0.14);
+
+      // Bracket the top bar
+      const topBarX = BAR_GAP;
+      const topBarH = finalOrder[0].final * BAR_MAX_H;
+      ctx.strokeStyle = `rgba(${accRGB},${0.25 * fadeIn})`;
+      ctx.lineWidth = 1;
+      ctx.setLineDash([3, 5]);
+      ctx.beginPath();
+      ctx.moveTo(topBarX - 8, BAR_BASE - topBarH - 4);
+      ctx.lineTo(topBarX - 16, BAR_BASE - topBarH - 4);
+      ctx.lineTo(topBarX - 16, BAR_BASE);
+      ctx.lineTo(topBarX - 8, BAR_BASE);
+      ctx.stroke();
+      ctx.setLineDash([]);
+    }
+
+    frame++;
+    requestAnimationFrame(drawFrame);
+  }
+
+  drawFrame();
+})();
+
+// PLAY STORE — scrolling word cloud
+(function initPlayStore() {
+  const cv = document.getElementById('cv4');
+  const ctx = cv.getContext('2d');
+  function resize() { cv.width = window.innerWidth; cv.height = window.innerHeight; }
+  resize();
+  new ResizeObserver(resize).observe(cv);
+
+  const words = ['easy','crash','slow','great','love','update','bug','feature','ui','awesome',
+    'rating','review','install','useful','laggy','intuitive','helpful','broken','fast','clean',
+    'ads','performance','battery','subscribe','notifications','permissions','privacy','update',
+    'design','confusing','addictive','powerful','recommend','terrible','simple','beautiful'];
+  const sentColors = {
+    positive: '#3ecf8e', negative: '#e05260', neutral: 'rgba(201,168,76,.55)'
+  };
+  const sentiment = {
+    'easy':'positive','great':'positive','love':'positive','awesome':'positive','useful':'positive',
+    'intuitive':'positive','helpful':'positive','fast':'positive','clean':'positive','beautiful':'positive',
+    'addictive':'positive','powerful':'positive','recommend':'positive','simple':'positive',
+    'crash':'negative','slow':'negative','bug':'negative','laggy':'negative','broken':'negative',
+    'terrible':'negative','confusing':'negative','ads':'negative',
+    'update':'neutral','feature':'neutral','rating':'neutral','review':'neutral','install':'neutral',
+    'ui':'neutral','notifications':'neutral','permissions':'neutral','privacy':'neutral',
+    'subscribe':'neutral','design':'neutral','performance':'neutral','battery':'neutral'
+  };
+
+  const particles = words.map((w,i) => ({
+    w,
+    x: Math.random(), y: Math.random(),
+    size: 10 + Math.random()*16,
+    vx: (Math.random()-.5)*.0002, vy: (Math.random()-.5)*.0002,
+    color: sentColors[sentiment[w]||'neutral'],
+    alpha: 0.3 + Math.random()*.45
+  }));
+
+  function draw() {
+    const W = cv.width, H = cv.height;
+    ctx.clearRect(0,0,W,H);
+    ctx.fillStyle='#080f1e'; ctx.fillRect(0,0,W,H);
+
+    ctx.strokeStyle='rgba(201,168,76,.04)'; ctx.lineWidth=1;
+    for(let i=0;i<8;i++){
+      const x=W*i/7;
+      ctx.beginPath(); ctx.moveTo(x,0); ctx.lineTo(x,H); ctx.stroke();
+    }
+
+    for(const p of particles){
+      p.x += p.vx; p.y += p.vy;
+      if(p.x<0)p.x=1; if(p.x>1)p.x=0;
+      if(p.y<0)p.y=1; if(p.y>1)p.y=0;
+      ctx.font = `${p.size}px IBM Plex Mono, monospace`;
+      ctx.fillStyle = p.color;
+      ctx.globalAlpha = p.alpha;
+      ctx.fillText(p.w, p.x*W, p.y*H);
+    }
+    ctx.globalAlpha=1;
+
+    const entries = [['Positive','#3ecf8e'],['Negative','#e05260'],['Neutral','rgba(201,168,76,.7)']];
+    let lx = 40;
+    entries.forEach(([label,col]) => {
+      ctx.fillStyle=col; ctx.globalAlpha=0.8;
+      ctx.fillRect(lx, 28, 10, 10);
+      ctx.fillStyle='rgba(240,232,213,.4)';
+      ctx.font='10px IBM Plex Mono, monospace';
+      ctx.fillText(label, lx+16, 37);
+      lx += 100;
+    });
+    ctx.globalAlpha=1;
+    requestAnimationFrame(draw);
+  }
+  draw();
+})();
+
+// ABOUT — subtle aurora
+(function initAbout() {
+  const cv = document.getElementById('cv5');
+  const ctx = cv.getContext('2d');
+  function resize() { cv.width = window.innerWidth; cv.height = window.innerHeight; }
+  resize();
+  new ResizeObserver(resize).observe(cv);
+
+  let t = 0;
+  function draw() {
+    const W = cv.width, H = cv.height;
+    ctx.clearRect(0,0,W,H);
+    ctx.fillStyle='#080f1e'; ctx.fillRect(0,0,W,H);
+
+    t += 0.003;
+    const blobs = [
+      {x:.3, y:.4, r:.35, h:201, s:70},
+      {x:.65, y:.55, r:.3, h:220, s:60},
+      {x:.5, y:.25, r:.25, h:180, s:50},
+    ];
+    blobs.forEach(b=>{
+      const cx = (b.x + Math.sin(t+b.h)*.05)*W;
+      const cy = (b.y + Math.cos(t+b.s)*.06)*H;
+      const g = ctx.createRadialGradient(cx,cy,0,cx,cy,b.r*W);
+      g.addColorStop(0,`hsla(${b.h},${b.s}%,35%,0.12)`);
+      g.addColorStop(1,'transparent');
+      ctx.fillStyle = g;
+      ctx.fillRect(0,0,W,H);
+    });
+
+    const spacing = 38;
+    for(let x=spacing;x<W;x+=spacing){
+      for(let y=spacing;y<H;y+=spacing){
+        const d = Math.hypot(x-W*.5, y-H*.5);
+        const alpha = Math.max(0, .08 - d/(W*1.2));
+        ctx.beginPath();
+        ctx.arc(x,y,1,0,Math.PI*2);
+        ctx.fillStyle=`rgba(201,168,76,${alpha})`;
+        ctx.fill();
+      }
+    }
+    requestAnimationFrame(draw);
+  }
+  draw();
+})();
+</script>
+
+</body>
+</html>
