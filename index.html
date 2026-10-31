@@ -175,6 +175,8 @@ body{background:var(--bg);color:var(--fg);font-family:'Inter',sans-serif;cursor:
   margin-bottom: 24px;
   display: block;
   opacity: 1 !important;
+  position: relative;
+  z-index: 10;
 }
 
 .about-inner {
@@ -189,7 +191,7 @@ body{background:var(--bg);color:var(--fg);font-family:'Inter',sans-serif;cursor:
   padding: 120px 56px 100px;
   gap: 60px;
 }
-.about-bio { max-width: 560px; flex: 1; min-width: 0; }
+.about-bio { max-width: 560px; flex: 1; min-width: 0; position: relative; z-index: 3; }
 .about-skills {
   display: flex;
   flex-wrap: wrap;
